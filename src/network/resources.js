@@ -20,4 +20,9 @@ export function  changeUserStatus(url,data = {}){
     return put(url,data)
 }
 
+//新增用户
+export function addUser(data = {}){
+    return post('users',data)
+}
+
 
