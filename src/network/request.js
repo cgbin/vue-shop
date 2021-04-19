@@ -18,7 +18,8 @@ function endLoading() {
 
 export function request(config){
     const instance = axios.create({
-        baseURL: 'http://127.0.0.1:8888/api/private/v1/',
+        // baseURL: 'http://127.0.0.1:8888/api/private/v1/',
+        baseURL:'http://timemeetyou.com:8889/api/private/v1/',
         timeout: 5000
     })
 
@@ -36,7 +37,7 @@ export function request(config){
   }, err => {
     // 2.1.3 对请求错误做点什么
     endLoading()
-    Message.error('请求超时');  
+    Message.error('请求超时');
     return Promise.resolve(err);
   })
 
@@ -52,7 +53,7 @@ export function request(config){
     //       ElMessage.error(res.data.message);
     //       break;
     //   // 错误
-    //   case 500:            
+    //   case 500:
     //       ElMessage.error("联系管理员");
     //       break;
     //   default:
@@ -63,7 +64,7 @@ export function request(config){
   }, err => {
     // 2.2.2 对响应错误做点什么
     // 返回状态码不为200时候的错误处理
-    endLoading()    
+    endLoading()
     Message.error('连接错误，请重试')
     return Promise.resolve(err);
   })
@@ -129,8 +130,8 @@ export const put = (url, params) => {
 
 // /**
 //  * 无需token验证的请求 避免旧token过期导致请求失败
-//  * @param {*} url 
-//  * @param {*} params 
+//  * @param {*} url
+//  * @param {*} params
 //  */
 // export const getRequestWithNoToken = (url, params) => {
 //     return request({

@@ -21,7 +21,7 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary">添加用户</el-button>
+          <el-button type="primary" @click="dialogaddUsersFormVisible = true">添加用户</el-button>
         </el-col>
       </el-row>
 
@@ -63,11 +63,35 @@
           :total="totalpage">
         </el-pagination>
     </el-card>
+
+    <!-- 添加用户表单 -->
+    <el-dialog title="新增用户" :visible.sync="dialogaddUsersFormVisible">
+      <el-form :model="addUsersForm" :rules="addUsersFormRules" ref="addUsersForm" status-icon>
+        <el-form-item label="用户名" :label-width="addUsersFormLabelWidth" prop="username">
+          <el-input v-model="addUsersForm.username" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" :label-width="addUsersFormLabelWidth" prop="password">
+          <el-input v-model="addUsersForm.password" type="password" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" :label-width="addUsersFormLabelWidth" prop="email">
+          <el-input v-model="addUsersForm.email" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号" :label-width="addUsersFormLabelWidth" prop="mobile">
+          <el-input v-model="addUsersForm.mobile" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addUsersFormClose">取 消</el-button>
+        <el-button type="primary" @click="addUsersFormConfirm">确 定</el-button>
+      </div>
+    </el-dialog>
+
+
   </div>
 </template>
 
 <script>
-import { getUserList,changeUserStatus } from "@/network/resources.js";
+import { getUserList, changeUserStatus, addUser } from "@/network/resources.js";
 
 export default {
   data() {
@@ -81,6 +105,33 @@ export default {
         pagenum: 1,
         pagesize: 10
       },
+      dialogaddUsersFormVisible:false, //新增用户表单显示
+      addUsersForm:{
+        username:'',
+        password:'',
+        email:'', //可空
+        mobile:'', //可空
+      },
+      addUsersFormLabelWidth: '80px',
+      //新增用户表单验证规则
+      addUsersFormRules:{
+        username:[
+            { required: true, message: '请输入用户名', trigger: 'blur' },
+            { min: 5, max: 10, message: '长度在 6 到 12 个字符', trigger: 'blur' }
+          ],
+        password:[
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 5, max: 10, message: '长度在 6 到 12 个字符', trigger: 'blur' }
+        ],
+        email:[
+          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+        ],
+        mobile: [{
+          pattern: /^1[34578]\d{9}$/, //可以写正则表达式呦呦呦
+          message: '请输入正确的中国大陆手机号码',
+          trigger: 'blur'
+        }],
+      }
     };
   },
   created() {
@@ -131,6 +182,32 @@ export default {
     //清空搜索框时触发
     clearInput(){
       this.getUserListData();
+    },
+    //关闭添加用户窗口
+    addUsersFormClose(){
+      this.dialogaddUsersFormVisible = false;
+      //重置表单
+      this.$refs.addUsersForm.resetFields();
+    },
+    //提交添加用户窗口
+    addUsersFormConfirm(){
+      this.$refs.addUsersForm.validate( async(valid) => {
+          if (valid) {
+            const add_res = await addUser(this.addUsersForm);
+            if( add_res.meta.status == 201){
+                this.$message.success({
+                    message: add_res.meta.msg,
+                    type: 'success'
+                });
+              this.getUserListData();
+              this.dialogaddUsersFormVisible = false;
+            }else{
+              this.$message.error(add_res.meta.msg);
+            }
+          } else {
+            return false;
+          }
+        });
     }
 
   },
