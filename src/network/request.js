@@ -76,7 +76,7 @@ export function request(config){
 
 
 // get 请求
-export const get = (url, params = {}) => {
+export const getRequest = (url, params = {}) => {
   // let accessToken = getStore('accessToken');
   return request({
       method: 'get',
@@ -86,7 +86,7 @@ export const get = (url, params = {}) => {
 };
 
 // post请求
-export const post = (url, params) => {
+export const postRequest = (url, params) => {
   // let accessToken = getStore("accessToken");
   return request({
       method: 'post',
@@ -95,7 +95,7 @@ export const post = (url, params) => {
   });
 };
 
-export const put = (url, params) => {
+export const putRequest = (url, params) => {
     // let accessToken = getStore("accessToken");
     return request({
         method: 'put',

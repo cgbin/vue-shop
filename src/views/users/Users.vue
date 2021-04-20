@@ -256,8 +256,8 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-        }).then(() => {
-            const res =  deleteUser('users/'+ row.id);
+        }).then( async () => {
+            const res = await deleteUser('users/'+ row.id);
             if( res.meta.status == 200){
                 this.$message.success({
                     message: res.meta.msg,
