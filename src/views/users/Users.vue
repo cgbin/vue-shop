@@ -1,11 +1,7 @@
 <template>
   <div class="users_container">
     <!-- 面包屑导航区域 -->
-    <el-breadcrumb separator-class="el-icon-arrow-right">
-      <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-      <el-breadcrumb-item>用户管理</el-breadcrumb-item>
-      <el-breadcrumb-item>用户列表</el-breadcrumb-item>
-    </el-breadcrumb>
+    <breadcrumbs :textList="breadCrumbsText"></breadcrumbs>
     <!--  卡片内容区域 -->
     <el-card class="box-card">
       <el-row :gutter="20">
@@ -100,9 +96,12 @@ import {
   deleteUser
   } from "@/network/resources.js";
 
+import Breadcrumbs from "@/components/Breadcrumbs.vue";
+
 export default {
   data() {
     return {
+      breadCrumbsText:['用户管理', '用户列表'],
       search: "",
       tableData: [],
       totalpage:0,
@@ -147,7 +146,9 @@ export default {
   mounted() {
     
   },
-
+  components:{
+    Breadcrumbs
+  },
   methods: {
     //获取用户列表
     async getUserListData() {

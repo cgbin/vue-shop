@@ -4,9 +4,16 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 const Login = () => import('@/components/Login.vue')
+//首页
 const Home = () => import('@/components/Home.vue')
+//欢迎页面
 const Welcome = () => import('@/components/Welcome.vue')
+// 用户列表
 const Users = () => import('@/views/users/Users.vue')
+//权限列表
+const Rights = () => import('@/views/users/Rights.vue')
+//角色列表
+const Roles = () => import('@/views/users/Roles.vue')
 
 const routes = [
   {
@@ -25,10 +32,13 @@ const routes = [
     redirect:'/welcome',
     children:[
       {path:'/welcome', name:'Welcome', component:Welcome},
-      {path:'/users', name:'Users', component:Users}
+      {path:'/users', name:'Users', component:Users},
+      {path:'/rights', name:'Rights', component:Rights},
+      {path:'/roles', name:'Roles', component:Roles},
     ]
   }
 ]
+
 
 const router = new VueRouter({
   mode: 'history',

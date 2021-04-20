@@ -40,3 +40,17 @@ export function  deleteUser(url,params = {}){
     return deleteRequest(url,params = {})
 }
 
+//获取权限列表
+export function  getRightsList(url,params = {}){
+    return getRequest(url,params = {})
+}
+
+//获取角色列表
+export function  getRolesList(){
+    return getRequest('roles')
+}
+
+//删除角色权限
+export function  deleteRoleAuth(url,params = {}){
+    return deleteRequest(url)
+}
