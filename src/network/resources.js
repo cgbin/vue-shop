@@ -25,4 +25,18 @@ export function addUser(data = {}){
     return post('users',data)
 }
 
+//查询用户
+export function getUser(url,params = {}){
+    return get(url,params = {})
+}
+
+//编辑用户
+export function  editUser(url,data = {}){
+    return put(url,data)
+}
+
+//删除用户
+export function  deleteUser(url,params = {}){
+    return deleteRequest(url,params = {})
+}
 

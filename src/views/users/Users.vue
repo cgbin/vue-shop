@@ -21,7 +21,7 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="dialogaddUsersFormVisible = true">添加用户</el-button>
+          <el-button type="primary" @click="addUsers">添加用户</el-button>
         </el-col>
       </el-row>
 
@@ -41,10 +41,10 @@
           <el-table-column width="180" label="操作">
             <template v-slot="scope">
     <el-tooltip class="item" effect="dark" content="编辑" placement="top">
-        <el-button type="primary" icon="el-icon-edit" size="small"></el-button>
+        <el-button type="primary" icon="el-icon-edit" size="small" @click="editUsers(scope.row)"></el-button>
     </el-tooltip>
     <el-tooltip class="item" effect="dark" content="删除" placement="top">
-        <el-button type="danger" icon="el-icon-delete" size="small"></el-button>
+        <el-button type="danger" icon="el-icon-delete" size="small" @click="deleteUsers(scope.row)"></el-button>
     </el-tooltip>
     <el-tooltip class="item" effect="dark" content="分配角色" placement="top">
         <el-button type="warning" icon="el-icon-setting" size="small"></el-button>
@@ -65,24 +65,24 @@
     </el-card>
 
     <!-- 添加用户表单 -->
-    <el-dialog title="新增用户" :visible.sync="dialogaddUsersFormVisible">
-      <el-form :model="addUsersForm" :rules="addUsersFormRules" ref="addUsersForm" status-icon>
-        <el-form-item label="用户名" :label-width="addUsersFormLabelWidth" prop="username">
-          <el-input v-model="addUsersForm.username" autocomplete="off"></el-input>
+    <el-dialog :title="formTitle[thisForm]" :visible.sync="dialogaddUsersFormVisible" @close="FormClose">
+      <el-form :model="UsersForm" :rules="addUsersFormRules" ref="UsersForm" status-icon>
+        <el-form-item label="用户名" :label-width="addUsersFormLabelWidth" prop="username" >
+          <el-input v-model="UsersForm.username" autocomplete="off" :disabled="!isAddForm()"></el-input>
         </el-form-item>
-        <el-form-item label="密码" :label-width="addUsersFormLabelWidth" prop="password">
-          <el-input v-model="addUsersForm.password" type="password" autocomplete="off"></el-input>
+        <el-form-item v-if="isAddForm()" label="密码" :label-width="addUsersFormLabelWidth" prop="password">
+          <el-input v-model="UsersForm.password" type="password" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="邮箱" :label-width="addUsersFormLabelWidth" prop="email">
-          <el-input v-model="addUsersForm.email" autocomplete="off"></el-input>
+          <el-input v-model="UsersForm.email" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="手机号" :label-width="addUsersFormLabelWidth" prop="mobile">
-          <el-input v-model="addUsersForm.mobile" autocomplete="off"></el-input>
+          <el-input v-model="UsersForm.mobile" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="addUsersFormClose">取 消</el-button>
-        <el-button type="primary" @click="addUsersFormConfirm">确 定</el-button>
+        <el-button @click="FormClose">取 消</el-button>
+        <el-button type="primary" @click="UsersFormConfirm">确 定</el-button>
       </div>
     </el-dialog>
 
@@ -91,7 +91,14 @@
 </template>
 
 <script>
-import { getUserList, changeUserStatus, addUser } from "@/network/resources.js";
+import { 
+  getUserList, 
+  changeUserStatus, 
+  addUser, 
+  getUser, 
+  editUser, 
+  deleteUser
+  } from "@/network/resources.js";
 
 export default {
   data() {
@@ -106,12 +113,12 @@ export default {
         pagesize: 10
       },
       dialogaddUsersFormVisible:false, //新增用户表单显示
-      addUsersForm:{
-        username:'',
-        password:'',
-        email:'', //可空
-        mobile:'', //可空
+      thisForm:'addUsersForm', //默认为添加用户窗口
+      formTitle:{
+        'addUsersForm':'新增用户',
+        'editUsersForm':'编辑用户',
       },
+      UsersForm:{ },  //form表单数据
       addUsersFormLabelWidth: '80px',
       //新增用户表单验证规则
       addUsersFormRules:{
@@ -183,31 +190,84 @@ export default {
     clearInput(){
       this.getUserListData();
     },
-    //关闭添加用户窗口
-    addUsersFormClose(){
+    //打开添加用户窗口
+    addUsers(){
+      this.dialogaddUsersFormVisible = true;
+      this.thisForm = 'addUsersForm';
+    },
+    //打开编辑用户窗口
+    async editUsers(row){
+      const res = await getUser('/users/' + row.id);
+      if( res.meta.status == 200){
+          this.UsersForm = res.data;
+          this.dialogaddUsersFormVisible = true;
+          this.thisForm = 'editUsersForm';
+      }else{
+          this.$message.error(login_res.meta.msg);
+      }
+    },
+    isAddForm(){
+     return this.thisForm === 'addUsersForm' ? true : false ;
+    },
+    //关闭添加/编辑用户窗口
+    FormClose(){
       this.dialogaddUsersFormVisible = false;
       //重置表单
-      this.$refs.addUsersForm.resetFields();
+      this.$refs.UsersForm.resetFields();
     },
-    //提交添加用户窗口
-    addUsersFormConfirm(){
-      this.$refs.addUsersForm.validate( async(valid) => {
-          if (valid) {
-            const add_res = await addUser(this.addUsersForm);
-            if( add_res.meta.status == 201){
+  
+    //提交用户窗口
+    UsersFormConfirm(){
+      this.$refs.UsersForm.validate( async(valid) => {
+          //新增用户表单提交
+          if (valid && this.isAddForm()) {
+            const res = await addUser(this.UsersForm);
+            if( res.meta.status == 201){
                 this.$message.success({
-                    message: add_res.meta.msg,
+                    message: res.meta.msg,
                     type: 'success'
                 });
               this.getUserListData();
               this.dialogaddUsersFormVisible = false;
             }else{
-              this.$message.error(add_res.meta.msg);
+              this.$message.error(res.meta.msg);
             }
-          } else {
+            //编辑用户表单提交
+          } else if(valid && !this.isAddForm()) {
+            const res = await editUser('users/'+ this.UsersForm.id, this.UsersForm);
+            if( res.meta.status == 200){
+                this.$message.success({
+                    message: res.meta.msg,
+                    type: 'success'
+                });
+              this.getUserListData();
+              this.dialogaddUsersFormVisible = false;
+            }else{
+              this.$message.error(res.meta.msg);
+            }
+          }else{
             return false;
           }
         });
+    },
+    //删除用户
+     deleteUsers(row){
+      this.$confirm('确认删除该用户吗?', '删除用户', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+        }).then(() => {
+            const res =  deleteUser('users/'+ row.id);
+            if( res.meta.status == 200){
+                this.$message.success({
+                    message: res.meta.msg,
+                    type: 'success'
+                });
+              this.getUserListData();
+            }else{
+              this.$message.error(res.meta.msg);
+            }
+        }).catch(()=>{});
     }
 
   },
