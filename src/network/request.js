@@ -116,17 +116,17 @@ export const put = (url, params) => {
     });
 };
 
-// export const deleteRequest = (url, params) => {
-//     let accessToken = getStore('accessToken');
-//     return request({
-//         method: 'delete',
-//         url: `${API_ROOT}${base}${url}`,
-//         params: params,
-//         headers: {
-//            'accessToken': accessToken
-//         }
-//     });
-// };
+export const deleteRequest = (url, params) => {
+    // let accessToken = getStore('accessToken');
+    return request({
+        method: 'delete',
+        url: url,
+        params: params,
+        // headers: {
+        //    'accessToken': accessToken
+        // }
+    });
+};
 
 // /**
 //  * 无需token验证的请求 避免旧token过期导致请求失败
