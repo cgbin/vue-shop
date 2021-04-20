@@ -1,38 +1,38 @@
-import {get,post,put} from '@/network/request.js'
+import {getRequest,postRequest,putRequest, deleteRequest} from '@/network/request.js'
 
 //登录验证
 export function getLoginStatus(LoginForm){
-    return post('login',LoginForm)
+    return postRequest('login',LoginForm)
 }
 
 //请求左侧菜单
 export function  getLeftMenu(){
-    return get('menus')
+    return getRequest('menus')
 }
 
 //请求用户列表
 export function  getUserList(params = {}){
-    return get('users',params)
+    return getRequest('users',params)
 }
 
 //修改用户状态
 export function  changeUserStatus(url,data = {}){
-    return put(url,data)
+    return putRequest(url,data)
 }
 
 //新增用户
 export function addUser(data = {}){
-    return post('users',data)
+    return postRequest('users',data)
 }
 
 //查询用户
 export function getUser(url,params = {}){
-    return get(url,params = {})
+    return getRequest(url,params = {})
 }
 
 //编辑用户
 export function  editUser(url,data = {}){
-    return put(url,data)
+    return putRequest(url,data)
 }
 
 //删除用户
