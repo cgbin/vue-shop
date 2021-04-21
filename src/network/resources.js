@@ -65,3 +65,10 @@ export function  setRoleAuth(url,params = {}){
     return postRequest(url,params)
 }
 
+
+//获取商品分类列表
+export function  getCateList(url,params = {}){
+    return getRequest(url,params)
+}
+
+

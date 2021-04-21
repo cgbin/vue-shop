@@ -14,6 +14,8 @@ const Users = () => import('@/views/users/Users.vue')
 const Rights = () => import('@/views/users/Rights.vue')
 //角色列表
 const Roles = () => import('@/views/users/Roles.vue')
+//商品分类列表
+const Category = () => import('@/views/goods/Category.vue')
 
 const routes = [
   {
@@ -35,6 +37,7 @@ const routes = [
       {path:'/users', name:'Users', component:Users},
       {path:'/rights', name:'Rights', component:Rights},
       {path:'/roles', name:'Roles', component:Roles},
+      {path:'/categories', name:'Category', component:Category},
     ]
   }
 ]
