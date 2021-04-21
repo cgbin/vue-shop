@@ -49,7 +49,7 @@
                     <el-button type="danger" icon="el-icon-delete" size="small" @click="deleteRoles(scope.row)"></el-button>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="分配权限" placement="top">
-                    <el-button type="warning" icon="el-icon-setting" size="small"></el-button>
+                    <el-button type="warning" icon="el-icon-setting" size="small" @click="showAuthDialog(scope.row)"></el-button>
                 </el-tooltip>
             </template> 
           </el-table-column>
@@ -57,7 +57,7 @@
       </template>
     </el-card>
 
-    <!-- 添加角色表单 -->
+    <!-- 添加/编辑角色表单 -->
     <el-dialog :title="formTitle[thisForm]" :visible.sync="dialogaddRolesFormVisible" @close="FormClose">
       <el-form :model="RolesForm" :rules="addRolesFormRules" ref="RolesForm" status-icon>
         <el-form-item label="角色名" :label-width="addRolesFormLabelWidth" prop="username" >
@@ -79,6 +79,25 @@
       </div>
     </el-dialog>
 
+    <!-- 分配权限dialog -->
+    <el-dialog :title="authDialogTitle" :visible.sync="authDialogVisible" @close="authDialogClose">
+     <!-- 可选树形节点 -->
+    <el-tree
+      :data="authTreeData"
+      show-checkbox
+      node-key="id" 
+      default-expand-all
+      :default-checked-keys="defaultCheckedKeys"
+      :props="treeProps"
+      ref="authTree"
+      >
+    </el-tree>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="authDialogClose">取 消</el-button>
+        <el-button type="primary" @click="authDialogConfirm">确 定</el-button>
+      </div>
+    </el-dialog>
+
 
   </div>
 </template>
@@ -86,7 +105,9 @@
 <script>
 import { 
   getRolesList, 
-  deleteRoleAuth
+  deleteRoleAuth,
+  getRightsList,
+  setRoleAuth
   } from "@/network/resources.js";
 
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
@@ -98,6 +119,17 @@ export default {
       search: "",
       tableData: [],
       dialogaddRolesFormVisible:false, //新增角色表单显示
+      authDialogVisible:false, //分配权限dialog显示
+      authDialogTitle:'分配权限',
+      authTreeData:[], //权限树形数据
+      defaultCheckedKeys:[],//默认选中的数据
+      //指定节点标签和子级属性
+      treeProps:{
+        label:'authName',
+        children:'children'
+      }, 
+      //分配权限时用户角色id
+      changeAuthRoleId:'',
       thisForm:'addRolesForm', //默认为添加角色窗口
       formTitle:{
         'addRolesForm':'新增角色',
@@ -166,6 +198,64 @@ export default {
               this.$message.error(res.meta.msg);
             }
         }).catch(()=>{});
+    },
+    //打开分配权限dialog
+    showAuthDialog(scopRow){
+        this.authDialogTitle = `为【${scopRow.roleName}】分配权限`;
+        //获取权限列表数据
+        this.getRightsListData(scopRow);
+    },
+    //关闭分配权限dialog
+    authDialogClose(){
+        // 每次关闭dialog后，将递归获取的默认选中数组清空
+        this.defaultCheckedKeys = [];
+        this.authDialogVisible = false;
+    },
+    //获取树形所有权限列表
+    async getRightsListData(scopRow) {
+      const rightsListData = await getRightsList('rights/tree');
+      if (rightsListData.meta.status == 200) {
+        this.authTreeData = rightsListData.data;
+        //获取当前角色已有权限列表，
+        this.getRoleAuthListData(scopRow, this.defaultCheckedKeys);
+        this.changeAuthRoleId = scopRow.id;
+        //显示分配权限dialog
+        this.authDialogVisible = true;
+      } else {
+        this.$message.error(rightsListData.meta.msg);
+      }
+    },
+    
+    //递归获取三级权限数组
+    getRoleAuthListData(node, arr) {
+        //不存在子节点，则为三级节点
+        if(!node.children){
+          return arr.push(node.id);
+        }
+        node.children.forEach(item => {
+           this.getRoleAuthListData(item, arr);
+        });
+    },
+    //提交分配权限表单
+    async authDialogConfirm(){
+        const CheckedKeys= [ 
+          //获取全选数据
+          ...this.$refs.authTree.getCheckedKeys(),
+          //获取半选数据
+          ...this.$refs.authTree.getHalfCheckedKeys(),
+          ];
+        if(!CheckedKeys){
+          this.$message.error('选中节点不能为空');
+        }
+        const authIdStr = CheckedKeys.join(',');
+        const res = await setRoleAuth(`roles/${this.changeAuthRoleId}/rights`,{'rids':authIdStr});
+        if( res.meta.status == 200){
+              this.$message.success(res.meta.msg);
+              this.getRolesListData();
+              this.authDialogVisible = false;
+          }else{
+              this.$message.error(res.meta.msg);
+        }
     },
     //打开添加角色窗口
     addRoles(){

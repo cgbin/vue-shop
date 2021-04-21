@@ -47,7 +47,7 @@ export default {
     Breadcrumbs
   },
   methods: {
-    //获取用户列表
+    //获取权限列表
     async getRightsListData() {
       const rightsListData = await getRightsList('rights/list');
       if (rightsListData.meta.status == 200) {

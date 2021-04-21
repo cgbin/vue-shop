@@ -27,7 +27,7 @@ export function addUser(data = {}){
 
 //查询用户
 export function getUser(url,params = {}){
-    return getRequest(url,params = {})
+    return getRequest(url,params)
 }
 
 //编辑用户
@@ -37,12 +37,12 @@ export function  editUser(url,data = {}){
 
 //删除用户
 export function  deleteUser(url,params = {}){
-    return deleteRequest(url,params = {})
+    return deleteRequest(url,params)
 }
 
 //获取权限列表
 export function  getRightsList(url,params = {}){
-    return getRequest(url,params = {})
+    return getRequest(url,params)
 }
 
 //获取角色列表
@@ -50,7 +50,18 @@ export function  getRolesList(){
     return getRequest('roles')
 }
 
+//获取单个角色
+export function  getRole(url,params = {}){
+    return getRequest(url,params)
+}
+
 //删除角色权限
 export function  deleteRoleAuth(url,params = {}){
-    return deleteRequest(url)
+    return deleteRequest(url,params)
 }
+
+//为角色分配权限
+export function  setRoleAuth(url,params = {}){
+    return postRequest(url,params)
+}
+
