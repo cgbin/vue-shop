@@ -236,6 +236,7 @@ export default {
         };
       this.dialogTitle = "添加角色";
       this.showRolesDialogForm = true;
+      //Vue.nextTick(callback)。这样回调函数将在 DOM 更新完成后被调用。
       this.$nextTick(() => {
         this.$refs["RoleDialogForm"].showDialogForm = true;
       });
@@ -248,9 +249,9 @@ export default {
           this.RolesFormData = res.data;
           this.dialogTitle = "编辑角色";
           this.showRolesDialogForm = true;
-          this.$nextTick(() => {
-            this.$refs["RoleDialogForm"].showDialogForm = true;
-          });
+          //Vue.nextTick(callback)。这样回调函数将在 DOM 更新完成后被调用。
+          this.$nextTick();
+          this.$refs["RoleDialogForm"].showDialogForm = true;
       }else{
           this.$message.error(login_res.meta.msg);
       }

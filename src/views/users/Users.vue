@@ -171,6 +171,7 @@ export default {
       };
       this.dialogTitle = '添加用户';
       this.showUserDialogForm = true;
+      //Vue.nextTick(callback)。这样回调函数将在 DOM 更新完成后被调用。
       this.$nextTick(() => {
         this.$refs["UserDialogForm"].showDialogForm = true;
       });
@@ -182,9 +183,9 @@ export default {
           this.UsersForm = res.data;
           this.dialogTitle = '修改用户';
           this.showUserDialogForm = true;
-          this.$nextTick(() => {
-            this.$refs["UserDialogForm"].showDialogForm = true;
-          });
+          //Vue.nextTick(callback)。这样回调函数将在 DOM 更新完成后被调用。
+          this.$nextTick();
+          this.$refs["UserDialogForm"].showDialogForm = true;
       }else{
           this.$message.error(login_res.meta.msg);
       }

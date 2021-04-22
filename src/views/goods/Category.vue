@@ -141,9 +141,14 @@ export default {
       await this.getPCateListData();
       this.dialogTitle = '添加分类';
       this.showCateDialogForm = true;
-      this.$nextTick(() => {
-        this.$refs["CateDialogForm"].showDialogForm = true;
-      });
+      //Vue.nextTick(callback)。这样回调函数将在 DOM 更新完成后被调用。
+      //正常写法
+      // this.$nextTick(() => {
+      //   this.$refs["CateDialogForm"].showDialogForm = true;
+      // });
+      // 定义了 async 后的写法
+      this.$nextTick();
+      this.$refs["CateDialogForm"].showDialogForm = true;
     },
 
     //打开编辑分类窗口
@@ -164,9 +169,9 @@ export default {
           }
           this.dialogTitle = '编辑分类';
           this.showCateDialogForm = true;
-          this.$nextTick(() => {
-            this.$refs["CateDialogForm"].showDialogForm = true;
-          });
+          //Vue.nextTick(callback)。这样回调函数将在 DOM 更新完成后被调用。
+          this.$nextTick();
+          this.$refs["CateDialogForm"].showDialogForm = true;
       }else{
           this.$message.error(res.meta.msg);
       }
