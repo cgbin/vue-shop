@@ -168,6 +168,9 @@ export default {
     Breadcrumbs
   },
   methods: {
+    setForm(){
+      this.RolesForm = {}
+    },
     //获取角色列表
     async getRolesListData() {
       const rolesListData = await getRolesList();
@@ -259,6 +262,8 @@ export default {
     },
     //打开添加角色窗口
     addRoles(){
+      //解决重置之后以第一次更新的数据作为标准，即表单的数据为编辑时的数据
+      this.setForm();
       this.dialogaddRolesFormVisible = true;
       this.thisForm = 'addRolesForm';
     },
@@ -295,7 +300,7 @@ export default {
                     type: 'success'
                 });
               this.getUserListData();
-              this.dialogaddRolesFormVisible = false;
+              this.FormClose(); //关闭并重置表单
             }else{
               this.$message.error(res.meta.msg);
             }
@@ -308,7 +313,7 @@ export default {
                     type: 'success'
                 });
               this.getUserListData();
-              this.dialogaddRolesFormVisible = false;
+              this.FormClose(); //关闭并重置表单
             }else{
               this.$message.error(res.meta.msg);
             }

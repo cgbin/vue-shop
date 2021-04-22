@@ -71,4 +71,23 @@ export function  getCateList(url,params = {}){
     return getRequest(url,params)
 }
 
+//新增商品分类
+export function  addCate(url,params = {}){
+    return postRequest(url,params)
+}
 
+//获取单个分类
+export function  getCate(url,params = {}){
+    return getRequest(url,params)
+}
+
+
+//编辑分类
+export function  editCate(url,data = {}){
+    return putRequest(url,data)
+}
+
+//删除分类
+export function  deleteCate(url,data = {}){
+    return deleteRequest(url,data)
+}

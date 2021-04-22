@@ -150,6 +150,9 @@ export default {
     Breadcrumbs
   },
   methods: {
+    setForm(){
+      this.UsersForm = {}
+    },
     //获取用户列表
     async getUserListData() {
       const userListData = await getUserList(this.queryData);
@@ -193,6 +196,8 @@ export default {
     },
     //打开添加用户窗口
     addUsers(){
+      //解决重置之后以第一次更新的数据作为标准，即表单的数据为编辑时的数据
+      this.setForm();
       this.dialogaddUsersFormVisible = true;
       this.thisForm = 'addUsersForm';
     },
@@ -229,7 +234,7 @@ export default {
                     type: 'success'
                 });
               this.getUserListData();
-              this.dialogaddUsersFormVisible = false;
+              this.FormClose(); //关闭并重置表单
             }else{
               this.$message.error(res.meta.msg);
             }
@@ -242,7 +247,7 @@ export default {
                     type: 'success'
                 });
               this.getUserListData();
-              this.dialogaddUsersFormVisible = false;
+              this.FormClose(); //关闭并重置表单
             }else{
               this.$message.error(res.meta.msg);
             }

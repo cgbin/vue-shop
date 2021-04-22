@@ -65,6 +65,7 @@
               :props="casCaderProps"
               @change="handleCateChange"
               clearable
+              :disabled="!isAddForm()"
           ></el-cascader>
         </el-form-item>
       </el-form>
@@ -83,6 +84,10 @@
 <script>
 import { 
   getCateList, 
+  addCate,
+  getCate,
+  editCate,
+  deleteCate
   } from "@/network/resources.js";
 
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
@@ -118,7 +123,11 @@ export default {
         'addCateForm':'新增分类',
         'editCateForm':'编辑分类',
       },
-      CateForm:{ },  //form表单数据
+      CateForm:{
+        cat_pid : 0, //父级id ，0为默认 1级分类 
+        cat_name:'',
+        cat_level: 0 //分类层级	不能为空，0表示一级分类；1表示二级分类；2表示三级分类
+      },  //form表单数据
       
       addCateFormLabelWidth: '80px',
       //新增分类表单验证规则
@@ -141,11 +150,25 @@ export default {
     Breadcrumbs
   },
   methods: {
+    //设置表单初始值
+    //在用ElementUI做动态表单时，数据的修改都是打开dialog（子组件）中进行操作的，
+    //但是在修改数据时，正常来说可以直接调用 this.$refs[str].resetFields() 直接清空，
+    //但是这里会出现一个问题: form表单的重置是以第一次打开的数据作为重置标准,如果先打开的是编辑,
+    //那么重置之后以第一次更新的数据作为标准，即表单的数据为编辑时的数据; 
+    setForm(){
+      this.CateForm = {
+          cat_pid : 0, //父级id ，0为默认 1级分类 
+          cat_name:'',
+          cat_level: 0 //分类层级	不能为空，0表示一级分类；1表示二级分类；2表示三级分类
+      }
+    },
     //获取分类列表
     async getCateListData() {
       const CateListData = await getCateList('categories',this.queryData);
       if (CateListData.meta.status == 200) {
         this.tableData = CateListData.data.result;
+        this.totalpage = CateListData.data.total;
+        this.queryData.pagenum = CateListData.data.pagenum;
       } else {
         this.$message.error(CateListData.meta.msg);
       }
@@ -161,6 +184,8 @@ export default {
     },
     //打开添加分类窗口
     addCate(){
+      this.setForm(); //解决重置之后以第一次更新的数据作为标准，即表单的数据为编辑时的数据
+      this.selectCateIds = [];
       this.thisForm = 'addCateForm';
       this.getPCateListData();
     },
@@ -174,20 +199,48 @@ export default {
           this.$message.error(login_res.meta.msg);
       }
     },  
-    //切换分类完成回调
+    //切换分类完成回调, value为选中的值
     handleCateChange(value){
-      console.log(value);
+      //长度大于0说明选中了值
+      if(this.selectCateIds.length > 0){
+           //父级id ，0为默认1级分类 
+          this.CateForm.cat_pid = this.selectCateIds[this.selectCateIds.length -1 ];
+          //0表示一级分类；1表示二级分类；2表示三级分类
+          this.CateForm.cat_level = this.selectCateIds.length;
+      }else{
+          this.CateForm.cat_pid = 0;
+          this.CateForm.cat_level = 0;
+      }
     },
 
     //打开编辑分类窗口
     async editCate(row){
-      const res = await getUser('/Cate/' + row.id);
+      this.selectCateIds = [];
+    
+      const res = await getCate(`/categories/${row.cat_id}`);
       if( res.meta.status == 200){
           this.CateForm = res.data;
-          this.dialogaddCateFormVisible = true;
+          //获取1,2父级分类列表数据
+          this.getPCateListData();
+          var ppcatid = 0;
+          if(res.data.cat_level > 1){
+              const ppcate_res = await getCate(`/categories/${res.data.cat_pid}`);
+                if(ppcate_res.meta.status != 200){
+                  this.$message.error(ppcate_res.meta.msg);   
+                }
+                if(ppcate_res.data.cat_pid > 0){
+                   var ppcatid = ppcate_res.data.cat_pid;
+                }
+          }
+          if(ppcatid){
+              this.selectCateIds= [ppcatid,res.data.cat_pid];
+          }else{
+            this.selectCateIds= [res.data.cat_pid];
+          }
           this.thisForm = 'editCateForm';
+          this.dialogaddCateFormVisible = true;
       }else{
-          this.$message.error(login_res.meta.msg);
+          this.$message.error(res.meta.msg);
       }
     },
     isAddForm(){
@@ -205,27 +258,27 @@ export default {
       this.$refs.CateForm.validate( async(valid) => {
           //新增分类表单提交
           if (valid && this.isAddForm()) {
-            const res = await addUser(this.CateForm);
+            const res = await addCate('categories',this.CateForm);
             if( res.meta.status == 201){
                 this.$message.success({
                     message: res.meta.msg,
                     type: 'success'
                 });
-              this.getUserListData();
-              this.dialogaddCateFormVisible = false;
+              this.getCateListData();
+              this.FormClose(); //关闭并重置表单
             }else{
               this.$message.error(res.meta.msg);
             }
             //编辑分类表单提交
           } else if(valid && !this.isAddForm()) {
-            const res = await editUser('Cate/'+ this.CateForm.id, this.CateForm);
+            const res = await editCate(`categories/${this.CateForm.cat_id}`, { cat_name: this.CateForm.cat_name});
             if( res.meta.status == 200){
                 this.$message.success({
                     message: res.meta.msg,
                     type: 'success'
                 });
-              this.getUserListData();
-              this.dialogaddCateFormVisible = false;
+              this.getCateListData();
+              this.FormClose(); //关闭并重置表单
             }else{
               this.$message.error(res.meta.msg);
             }
@@ -241,13 +294,13 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
         }).then( async () => {
-            const res = await deleteUser('Cate/'+ row.id);
+            const res = await deleteCate(`categories/${row.cat_id}`,);
             if( res.meta.status == 200){
                 this.$message.success({
                     message: res.meta.msg,
                     type: 'success'
                 });
-              this.getUserListData();
+              this.getCateListData();
             }else{
               this.$message.error(res.meta.msg);
             }
@@ -268,6 +321,10 @@ export default {
 
 .el-icon-success{
   color: #5cb6ff;
+}
+
+.el-cascader{
+  width: 100%;
 }
 
 </style>
