@@ -220,7 +220,7 @@ export default {
       if (rightsListData.meta.status == 200) {
         this.authTreeData = rightsListData.data;
         //获取当前角色已有权限列表，
-        this.getRoleAuthListData(scopRow, this.defaultCheckedKeys);
+        await this.getRoleAuthListData(scopRow, this.defaultCheckedKeys);
         this.changeAuthRoleId = scopRow.id;
         //显示分配权限dialog
         this.authDialogVisible = true;

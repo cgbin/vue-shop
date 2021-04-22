@@ -216,47 +216,36 @@ export default {
     //打开编辑分类窗口
     async editCate(row){
       this.selectCateIds = [];
-    
       const res = await getCate(`/categories/${row.cat_id}`);
       if( res.meta.status == 200){
           this.CateForm = res.data;
           //获取1,2父级分类列表数据
-          this.getPCateListData();
-          var ppcatid = 0;
+          await this.getPCateListData();
            if(res.data.cat_level > 0){
              this.getPcateIds(this.PCateList, res.data.cat_pid, this.selectCateIds);
-             console.log(this.selectCateIds);
-          //     const ppcate_res = await getCate(`/categories/${res.data.cat_pid}`);
-          //       if(ppcate_res.meta.status != 200){
-          //         this.$message.error(ppcate_res.meta.msg);   
-          //       }
-          //       if(ppcate_res.data.cat_pid > 0){
-          //          var ppcatid = ppcate_res.data.cat_pid;
-          //       }
           }
-
-          // if(ppcatid){
-          //     this.selectCateIds= [ppcatid,res.data.cat_pid];
-          // }else{
-          //   this.selectCateIds= [res.data.cat_pid];
-          // }
-
-          
           this.thisForm = 'editCateForm';
           this.dialogaddCateFormVisible = true;
       }else{
           this.$message.error(res.meta.msg);
       }
     },
-    //传入子级cat_id获取父级cat_id
-    getPcateIds(node, cat_pid ,arr) {
-        //不存在子节点，则为三级节点
-        if(!node.children){
-          return arr.push(cat_pid);
-        }
-        node.children.forEach(item => {
-           this.getPcateIds(item, item.cat_pid, arr);
-        });
+    //传入子级cat_id获取父级cat_ids
+    getPcateIds(data, cat_pid ,arr) {
+      if(cat_pid > 0){
+          data.forEach(itemx => {
+            if(cat_pid == itemx.cat_id){
+              return arr.push(itemx.cat_id)
+            }
+            if(itemx.children){
+              itemx.children.forEach(itemy => {
+                  if(cat_pid == itemy.cat_id){
+                    return arr.push(itemx.cat_id, itemy.cat_id)
+                  }  
+              });
+            }
+          });
+      }
     },
 
     isAddForm(){
