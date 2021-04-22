@@ -58,26 +58,12 @@
     </el-card>
 
     <!-- 添加/编辑角色表单 -->
-    <el-dialog :title="formTitle[thisForm]" :visible.sync="dialogaddRolesFormVisible" @close="FormClose">
-      <el-form :model="RolesForm" :rules="addRolesFormRules" ref="RolesForm" status-icon>
-        <el-form-item label="角色名" :label-width="addRolesFormLabelWidth" prop="username" >
-          <el-input v-model="RolesForm.username" autocomplete="off" :disabled="!isAddForm()"></el-input>
-        </el-form-item>
-        <el-form-item v-if="isAddForm()" label="密码" :label-width="addRolesFormLabelWidth" prop="password">
-          <el-input v-model="RolesForm.password" type="password" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="邮箱" :label-width="addRolesFormLabelWidth" prop="email">
-          <el-input v-model="RolesForm.email" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="手机号" :label-width="addRolesFormLabelWidth" prop="mobile">
-          <el-input v-model="RolesForm.mobile" autocomplete="off"></el-input>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="FormClose">取 消</el-button>
-        <el-button type="primary" @click="RolesFormConfirm">确 定</el-button>
-      </div>
-    </el-dialog>
+    <role-dialog-form 
+      ref="RoleDialogForm"
+      :dialog-title="dialogTitle"
+      :form-data="RolesFormData"
+      @closeDialogForm="closeRoleDialogForm"
+    ></role-dialog-form> 
 
     <!-- 分配权限dialog -->
     <el-dialog :title="authDialogTitle" :visible.sync="authDialogVisible" @close="authDialogClose">
@@ -107,10 +93,13 @@ import {
   getRolesList, 
   deleteRoleAuth,
   getRightsList,
-  setRoleAuth
+  setRoleAuth,
+  getRole,
+  deleteRole
   } from "@/network/resources.js";
 
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
+import RoleDialogForm from "@/components/dialogform/RoleDialogForm.vue";
 
 export default {
   data() {
@@ -118,7 +107,6 @@ export default {
       breadCrumbsText:['权限管理', '角色列表'],
       search: "",
       tableData: [],
-      dialogaddRolesFormVisible:false, //新增角色表单显示
       authDialogVisible:false, //分配权限dialog显示
       authDialogTitle:'分配权限',
       authTreeData:[], //权限树形数据
@@ -130,32 +118,14 @@ export default {
       }, 
       //分配权限时用户角色id
       changeAuthRoleId:'',
-      thisForm:'addRolesForm', //默认为添加角色窗口
-      formTitle:{
-        'addRolesForm':'新增角色',
-        'editRolesForm':'编辑角色',
+      //form表单数据
+      RolesFormData:{
+        roleName:'',
+        roleDesc:'',
       },
-      RolesForm:{ },  //form表单数据
-      addRolesFormLabelWidth: '80px',
-      //新增角色表单验证规则
-      addRolesFormRules:{
-        username:[
-            { required: true, message: '请输入角色名', trigger: 'blur' },
-            { min: 5, max: 10, message: '长度在 6 到 12 个字符', trigger: 'blur' }
-          ],
-        password:[
-          { required: true, message: '请输入角色名', trigger: 'blur' },
-          { min: 5, max: 10, message: '长度在 6 到 12 个字符', trigger: 'blur' }
-        ],
-        email:[
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-        ],
-        mobile: [{
-          pattern: /^1[34578]\d{9}$/, //可以写正则表达式呦呦呦
-          message: '请输入正确的中国大陆手机号码',
-          trigger: 'blur'
-        }],
-      }
+      //是否渲染编辑角色表单
+      showRolesDialogForm:false,
+      dialogTitle:'添加角色',  
     };
   },
   created() {
@@ -165,12 +135,10 @@ export default {
     
   },
   components:{
-    Breadcrumbs
+    Breadcrumbs,
+    RoleDialogForm
   },
   methods: {
-    setForm(){
-      this.RolesForm = {}
-    },
     //获取角色列表
     async getRolesListData() {
       const rolesListData = await getRolesList();
@@ -262,80 +230,54 @@ export default {
     },
     //打开添加角色窗口
     addRoles(){
-      //解决重置之后以第一次更新的数据作为标准，即表单的数据为编辑时的数据
-      this.setForm();
-      this.dialogaddRolesFormVisible = true;
-      this.thisForm = 'addRolesForm';
+        this.RolesFormData = {
+            roleName:'',
+            roleDesc:'',
+        };
+      this.dialogTitle = "添加角色";
+      this.showRolesDialogForm = true;
+      this.$nextTick(() => {
+        this.$refs["RoleDialogForm"].showDialogForm = true;
+      });
+      
     },
     //打开编辑角色窗口
     async editRoles(row){
-      const res = await getUser('/Roles/' + row.id);
+      const res = await getRole(`roles/${row.id}`);
       if( res.meta.status == 200){
-          this.RolesForm = res.data;
-          this.dialogaddRolesFormVisible = true;
-          this.thisForm = 'editRolesForm';
+          this.RolesFormData = res.data;
+          this.dialogTitle = "编辑角色";
+          this.showRolesDialogForm = true;
+          this.$nextTick(() => {
+            this.$refs["RoleDialogForm"].showDialogForm = true;
+          });
       }else{
           this.$message.error(login_res.meta.msg);
       }
     },
-    isAddForm(){
-     return this.thisForm === 'addRolesForm' ? true : false ;
-    },
     //关闭添加/编辑角色窗口
-    FormClose(){
-      this.dialogaddRolesFormVisible = false;
-      //重置表单
-      this.$refs.RolesForm.resetFields();
-    },
-  
-    //提交角色窗口
-    RolesFormConfirm(){
-      this.$refs.RolesForm.validate( async(valid) => {
-          //新增角色表单提交
-          if (valid && this.isAddForm()) {
-            const res = await addUser(this.RolesForm);
-            if( res.meta.status == 201){
-                this.$message.success({
-                    message: res.meta.msg,
-                    type: 'success'
-                });
-              this.getUserListData();
-              this.FormClose(); //关闭并重置表单
-            }else{
-              this.$message.error(res.meta.msg);
-            }
-            //编辑角色表单提交
-          } else if(valid && !this.isAddForm()) {
-            const res = await editUser('Roles/'+ this.RolesForm.id, this.RolesForm);
-            if( res.meta.status == 200){
-                this.$message.success({
-                    message: res.meta.msg,
-                    type: 'success'
-                });
-              this.getUserListData();
-              this.FormClose(); //关闭并重置表单
-            }else{
-              this.$message.error(res.meta.msg);
-            }
-          }else{
-            return false;
-          }
-        });
+    closeRoleDialogForm(flag){
+      if (flag) {
+        // 重新刷新表格内容
+        this.getRolesListData();
+      }
+      this.showRolesDialogForm = false;
     },
     //删除角色
      deleteRoles(row){
+    
       this.$confirm('确认删除该角色吗?', '删除角色', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
         }).then( async () => {
-            const res = await deleteUser('Roles/'+ row.id);
+            const res = await deleteRole(`roles/${row.id}`);
             if( res.meta.status == 200){
                 this.$message.success({
                     message: res.meta.msg,
                     type: 'success'
                 });
-              this.getUserListData();
+              this.getRolesListData();
             }else{
               this.$message.error(res.meta.msg);
             }

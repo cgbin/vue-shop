@@ -50,9 +50,24 @@ export function  getRolesList(){
     return getRequest('roles')
 }
 
+//新增角色
+export function  addRole(url,params = {}){
+    return postRequest(url,params)
+}
+
 //获取单个角色
 export function  getRole(url,params = {}){
     return getRequest(url,params)
+}
+
+//修改单个角色
+export function  editRole(url,params = {}){
+    return putRequest(url,params)
+}
+
+//删除单个角色
+export function  deleteRole(url,params = {}){
+    return deleteRequest(url,params)
 }
 
 //删除角色权限

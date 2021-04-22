@@ -61,26 +61,13 @@
     </el-card>
 
     <!-- 添加用户表单 -->
-    <el-dialog :title="formTitle[thisForm]" :visible.sync="dialogaddUsersFormVisible" @close="FormClose">
-      <el-form :model="UsersForm" :rules="addUsersFormRules" ref="UsersForm" status-icon>
-        <el-form-item label="用户名" :label-width="addUsersFormLabelWidth" prop="username" >
-          <el-input v-model="UsersForm.username" autocomplete="off" :disabled="!isAddForm()"></el-input>
-        </el-form-item>
-        <el-form-item v-if="isAddForm()" label="密码" :label-width="addUsersFormLabelWidth" prop="password">
-          <el-input v-model="UsersForm.password" type="password" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="邮箱" :label-width="addUsersFormLabelWidth" prop="email">
-          <el-input v-model="UsersForm.email" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="手机号" :label-width="addUsersFormLabelWidth" prop="mobile">
-          <el-input v-model="UsersForm.mobile" autocomplete="off"></el-input>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="FormClose">取 消</el-button>
-        <el-button type="primary" @click="UsersFormConfirm">确 定</el-button>
-      </div>
-    </el-dialog>
+    <user-dialog-form
+        ref="UserDialogForm"
+        :show-dialog-form="showUserDialogForm"
+        :dialog-title="dialogTitle"
+        :form-data="UsersForm"
+        @closeDialogForm="closeUserDialogForm"
+    ></user-dialog-form>
 
 
   </div>
@@ -90,13 +77,13 @@
 import { 
   getUserList, 
   changeUserStatus, 
-  addUser, 
-  getUser, 
-  editUser, 
+  getUser,  
   deleteUser
   } from "@/network/resources.js";
 
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
+import UserDialogForm from "@/components/dialogform/UserDialogForm.vue";
+
 
 export default {
   data() {
@@ -111,33 +98,15 @@ export default {
         pagenum: 1,
         pagesize: 10
       },
-      dialogaddUsersFormVisible:false, //新增用户表单显示
-      thisForm:'addUsersForm', //默认为添加用户窗口
-      formTitle:{
-        'addUsersForm':'新增用户',
-        'editUsersForm':'编辑用户',
-      },
-      UsersForm:{ },  //form表单数据
-      addUsersFormLabelWidth: '80px',
-      //新增用户表单验证规则
-      addUsersFormRules:{
-        username:[
-            { required: true, message: '请输入用户名', trigger: 'blur' },
-            { min: 5, max: 10, message: '长度在 6 到 12 个字符', trigger: 'blur' }
-          ],
-        password:[
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 5, max: 10, message: '长度在 6 到 12 个字符', trigger: 'blur' }
-        ],
-        email:[
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-        ],
-        mobile: [{
-          pattern: /^1[34578]\d{9}$/, //可以写正则表达式呦呦呦
-          message: '请输入正确的中国大陆手机号码',
-          trigger: 'blur'
-        }],
-      }
+      dialogTitle:'添加用户',
+      showUserDialogForm:false, //新增用户表单显示
+      //form表单数据
+      UsersForm:{
+        username:'',
+        password:'',
+        email:'',
+        mobile:''
+      },  
     };
   },
   created() {
@@ -147,12 +116,10 @@ export default {
     
   },
   components:{
-    Breadcrumbs
+    Breadcrumbs,
+    UserDialogForm
   },
   methods: {
-    setForm(){
-      this.UsersForm = {}
-    },
     //获取用户列表
     async getUserListData() {
       const userListData = await getUserList(this.queryData);
@@ -196,65 +163,39 @@ export default {
     },
     //打开添加用户窗口
     addUsers(){
-      //解决重置之后以第一次更新的数据作为标准，即表单的数据为编辑时的数据
-      this.setForm();
-      this.dialogaddUsersFormVisible = true;
-      this.thisForm = 'addUsersForm';
+      this.UsersForm = {
+          username:'',
+          password:'',
+          email:'',
+          mobile:''
+      };
+      this.dialogTitle = '添加用户';
+      this.showUserDialogForm = true;
+      this.$nextTick(() => {
+        this.$refs["UserDialogForm"].showDialogForm = true;
+      });
     },
     //打开编辑用户窗口
     async editUsers(row){
       const res = await getUser('/users/' + row.id);
       if( res.meta.status == 200){
           this.UsersForm = res.data;
-          this.dialogaddUsersFormVisible = true;
-          this.thisForm = 'editUsersForm';
+          this.dialogTitle = '修改用户';
+          this.showUserDialogForm = true;
+          this.$nextTick(() => {
+            this.$refs["UserDialogForm"].showDialogForm = true;
+          });
       }else{
           this.$message.error(login_res.meta.msg);
       }
     },
-    isAddForm(){
-     return this.thisForm === 'addUsersForm' ? true : false ;
-    },
     //关闭添加/编辑用户窗口
-    FormClose(){
-      this.dialogaddUsersFormVisible = false;
-      //重置表单
-      this.$refs.UsersForm.resetFields();
-    },
-  
-    //提交用户窗口
-    UsersFormConfirm(){
-      this.$refs.UsersForm.validate( async(valid) => {
-          //新增用户表单提交
-          if (valid && this.isAddForm()) {
-            const res = await addUser(this.UsersForm);
-            if( res.meta.status == 201){
-                this.$message.success({
-                    message: res.meta.msg,
-                    type: 'success'
-                });
-              this.getUserListData();
-              this.FormClose(); //关闭并重置表单
-            }else{
-              this.$message.error(res.meta.msg);
-            }
-            //编辑用户表单提交
-          } else if(valid && !this.isAddForm()) {
-            const res = await editUser('users/'+ this.UsersForm.id, this.UsersForm);
-            if( res.meta.status == 200){
-                this.$message.success({
-                    message: res.meta.msg,
-                    type: 'success'
-                });
-              this.getUserListData();
-              this.FormClose(); //关闭并重置表单
-            }else{
-              this.$message.error(res.meta.msg);
-            }
-          }else{
-            return false;
-          }
-        });
+    closeUserDialogForm(flag){
+      console.log(flag);
+      if(flag){
+        this.getUserListData();
+      }
+      this.showUserDialogForm = false;
     },
     //删除用户
      deleteUsers(row){
@@ -263,7 +204,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
         }).then( async () => {
-            const res = await deleteUser('users/'+ row.id);
+            const res = await deleteUser(`users/${row.id}`);
             if( res.meta.status == 200){
                 this.$message.success({
                     message: res.meta.msg,
